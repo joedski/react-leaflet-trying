@@ -1,0 +1,101 @@
+body, html {
+	height: 100%;
+	padding: 0;
+	margin: 0;
+}
+
+.app-container {
+	height: 100%;
+	max-height: 100%;
+}
+
+.citymap-app {
+	height: 100%;
+
+	display: flex;
+	flex-direction: row;
+	align-item: center;
+
+	> * {
+		flex: 1 1 auto;
+	}
+}
+
+// .citymap {}
+
+.side-panel {
+	display: flex;
+}
+
+.side-panel--toggle {
+	flex: 0 0 auto;
+}
+
+.side-panel--toggle {
+	z-index: 100000;
+
+	position: relative;
+	height: 100%;
+
+	padding: @padding-small-vertical;
+	background: @panel-default-heading-bg;
+	border: 1px solid @panel-default-border;
+
+	display: flex;
+	justify-content: center;
+	flex-direction: column;
+
+	color: @gray;
+
+	i {
+		flex: 0 0 auto;
+	}
+}
+
+.side-panel--toggle__right {
+	border-top-left-radius: @border-radius-base;
+	border-bottom-left-radius: @border-radius-base;
+	margin-left: (-@border-radius-base);
+}
+
+.side-panel--toggle__left {
+	border-top-right-radius: @border-radius-base;
+	border-bottom-right-radius: @border-radius-base;
+	margin-right: (-@border-radius-base);
+}
+
+.side-panel--content {
+	flex: 0 0 auto;
+	overflow: hidden;
+	display: flex;
+
+	// // Transition.
+	width: 220px;
+	// transition: width 0.2s;
+
+	> * {
+		flex: 1 1 auto;
+	}
+}
+
+.side-panel--content__collapsed {
+	width: 0;
+	// flex-basis: 0;
+}
+
+
+
+////////
+
+.map-location-index, .map-location-details {
+	position: relative;
+	min-width: 220px;
+	width: 220px;
+	padding: @padding-base-vertical @padding-base-horizontal;
+
+	overflow-y: auto;
+
+	h3, h4 {
+		margin-top: 10px;
+	}
+}

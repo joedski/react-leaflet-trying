@@ -5,8 +5,11 @@
 const path = require( 'path' );
 
 const gulp = require( 'gulp' );
+const gulpIf = require( 'gulp-if' );
+const rename = require( 'gulp-rename' );
 const gutil = require( 'gulp-util' );
 const less = require( 'gulp-less' );
+const sass = require( 'gulp-sass' );
 const sourcemaps = require( 'gulp-sourcemaps' );
 
 const postcss = require( 'gulp-postcss' );
@@ -26,7 +29,7 @@ const outputDir = 'public';
 const scriptsSourceDir = 'app';
 const stylesSourceDir = 'styles';
 
-const buildEnv = process.NODE_ENV;
+const buildEnv = process.env.NODE_ENV;
 
 
 
@@ -42,11 +45,11 @@ gulp.task( 'site', [
 ]);
 
 gulp.task( 'watch-site', () => {
-	gulp.watch([ `${ sourceDir }/assets/**/*` ], [
+	gulp.watch([ `${ sourceDir }/assets/**/*`, `vendor/*/assets/**/*` ], [
 		'site:assets:site',
 	]);
 
-	gulp.watch([ `${ sourceDir }/${ stylesSourceDir }/**/*` ], [
+	gulp.watch([ `${ sourceDir }/${ stylesSourceDir }/**/*`, `vendor/*/**/*.css` ], [
 		'site:styles',
 	]);
 
@@ -61,11 +64,12 @@ gulp.task( 'site:scripts', [
 	'site:scripts:main'
 ]);
 
-gulp.task( 'site:scripts:main', site_scripts_main );
+gulp.task( 'site:scripts:main', () => site_scripts_main() );
 
 function site_scripts_main( watch ) {
 	let bundler = browserify( `${ sourceDir }/${ scriptsSourceDir }/index.js`, {
 		debug: buildEnv !== 'production',
+		paths: [ 'vendor' ],
 		cache: {}, packageCache: {}
 	})
 		.transform( 'envify' )
@@ -73,11 +77,13 @@ function site_scripts_main( watch ) {
 		;
 
 	if( buildEnv === 'production' ) {
-		bundler = bundler.transform( 'uglifyify' );
+		bundler = bundler.transform({ global: true }, 'uglifyify' );
 	}
 
 	if( watch ) {
 		bundler = bundler.plugin( 'watchify' );
+		bundler.on( 'update', execBundle );
+		bundler.on( 'log', function() { gutil.log.apply( gutil, [ 'watch:app:scripts:combined/bundler:' ].concat( [].slice.call( arguments, 0 ) ) ); });
 	}
 
 	return execBundle();
@@ -113,14 +119,26 @@ function site_scripts_main( watch ) {
 //////// Assets
 
 gulp.task( 'site:assets', [
+	'site:assets:vendor',
 	'site:assets:site',
 	// 'site:assets:jquery',
 	// 'site:assets:bootstrap:scripts',
 	'site:assets:bootstrap:fonts',
+	'site:assets:font-awesome:fonts',
 ]);
 
 gulp.task( 'site:assets:site', () => {
 	return gulp.src([ `${ sourceDir }/assets/**/*` ])
+		.pipe( gulp.dest( `${ outputDir }` ) )
+		;
+});
+
+gulp.task( 'site:assets:vendor', () => {
+	// Something went wrong here...
+	return gulp.src([ `vendor/*/assets/**/*` ], { base: 'vendor' })
+		.pipe( rename( assetPath => {
+			assetPath.dirname = assetPath.dirname.replace( /[^\/\\]+[\/\\]assets([\/\\]|$)/, '' );
+		} ) )
 		.pipe( gulp.dest( `${ outputDir }` ) )
 		;
 });
@@ -147,20 +165,40 @@ gulp.task( 'site:assets:bootstrap:fonts', () => {
 		;
 });
 
+gulp.task( 'site:assets:font-awesome:fonts', () => {
+	return gulp.src([ 'node_modules/font-awesome/fonts/**/*' ])
+		.pipe( gulp.dest( `${ outputDir }/fonts` ) )
+		;
+});
+
 
 
 //////// Styles
 
 gulp.task( 'site:styles', () => {
 	return gulp.src([
-		`${ sourceDir }/${ stylesSourceDir }/*.less`
+		`node_modules/leaflet/dist/leaflet.css`,
+		`node_modules/font-awesome/css/font-awesome.css`,
+		`${ sourceDir }/${ stylesSourceDir }/*.{less,scss,sass}`,
+		`vendor/leaflet.awesome-markers/*.css`,
 	])
+		// .pipe( rename( assetPath => {
+		// 	console.log( 'assetPath', assetPath.dirname );
+		// 	if( /(^|[\/\\])vendor[\/\\]/.test( assetPath.dirname ) ) {
+		// 		assetPath.dirname = assetPath.dirname.replace( /vendor[\/\\][^\/\\]+[\/\\]assets[\/\\]/, '' );
+		// 	}
+		// } ) )
 		.pipe( buildEnv === 'production' ? sourcemaps.init() : gutil.noop() )
-		.pipe( less({
+		.pipe( gulpIf( /\.less$/, less({
 			paths: [
 				path.join( __dirname, 'node_modules', 'bootstrap', 'less' )
 			],
-		}))
+		})))
+		.pipe( gulpIf( /\.sass$/, sass(/*{
+			paths: [
+				path.join( __dirname, 'node_modules', 'bootstrap', 'less' )
+			],
+		}*/)))
 		.pipe( postcss([
 				autoprefixer({ browsers: [ 'last 2 versions' ] }),
 			].concat(

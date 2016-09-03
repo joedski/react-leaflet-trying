@@ -6,7 +6,7 @@ import reducer from './reducers';
 export function getStore( hydrate ) {
 	let hydrateFn, store;
 
-	let enhancer = applyMiddleware(
+	let enhancer = window.devToolsExtension && window.devToolsExtension() || applyMiddleware(
 		createReduxLogger()
 	);
 

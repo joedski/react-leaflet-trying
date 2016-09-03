@@ -1,0 +1,27 @@
+.panel-compact {
+	@panel-general-padding-compact: 6px 8px;
+	@panel-body-padding-compact: 8px;
+
+	.panel-heading {
+		padding: @panel-general-padding-compact;
+		.panel-title {
+			margin-top: 0;
+		}
+	}
+
+	.panel-body {
+		padding: @panel-body-padding-compact;
+	}
+
+	.list-group-item {
+		padding: @panel-general-padding-compact;
+
+		> *:last-child {
+			margin-bottom: 0;
+		}
+	}
+
+	.list-group-item-heading {
+		margin-top: 0;
+	}
+}
